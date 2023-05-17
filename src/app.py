@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User
+from models import db, User, Change, Order, FoodItem, StoreItem, AquaticItem, OrderItem
 #from models import Person
 
 app = Flask(__name__)
@@ -192,20 +192,199 @@ def update_order(order_id):
     return jsonify({'message': 'Order updated successfully'}), 200
 
 
-#Orders    
+# Order routes
+@app.route('/orders', methods=['GET'])
+def get_orders():
+    with db.session as session:
+        orders = session.query(Order).all()
+    return jsonify([order.serialize() for order in orders]), 200
+
+@app.route('/orders', methods=['POST'])
+def create_order():
+    order_data = request.json
+    order = Order(table_number=order_data['table_number'], number_of_people=order_data['number_of_people'])
+    with db.session as session:
+        session.add(order)
+        session.commit()
+    return jsonify({'message': 'Order created successfully'}), 201
+
+@app.route('/orders/<int:order_id>', methods=['PUT'])
+def update_order(order_id):
+    order_data = request.json
+    with db.session as session:
+        order = session.query(Order).get(order_id)
+        order.table_number = order_data['table_number']
+        order.number_of_people = order_data['number_of_people']
+        session.commit()
+    return jsonify({'message': 'Order updated successfully'}), 200
 
 @app.route('/orders/<int:order_id>', methods=['DELETE'])
 def delete_order(order_id):
-    # Get the order with the specified ID from the database.
     with db.session as session:
         order = session.query(Order).get(order_id)
-
-    # Delete the order from the database.
-    session.delete(order)
-    session.commit()
-
-    # Return a success message.
+        session.delete(order)
+        session.commit()
     return jsonify({'message': 'Order deleted successfully'}), 200
+
+# OrderItem routes
+@app.route('/orderitems', methods=['GET'])
+def get_order_items():
+    with db.session as session:
+        order_items = session.query(OrderItem).all()
+    return jsonify([item.serialize() for item in order_items]), 200
+
+@app.route('/orderitems', methods=['POST'])
+def create_order_item():
+    order_item_data = request.json
+    order_item = OrderItem(
+        order_id=order_item_data['order_id'],
+        item_type=order_item_data['item_type'],
+        item_id=order_item_data['item_id'],
+        quantity=order_item_data['quantity']
+    )
+    with db.session as session:
+        session.add(order_item)
+        session.commit()
+    return jsonify({'message': 'Order item created successfully'}), 201
+
+@app.route('/orderitems/<int:order_item_id>', methods=['PUT'])
+def update_order_item(order_item_id):
+    order_item_data = request.json
+    with db.session as session:
+        order_item = session.query(OrderItem).get(order_item_id)
+        order_item.order_id = order_item_data['order_id']
+        order_item.item_type = order_item_data['item_type']
+        order_item.item_id = order_item_data['item_id']
+        order_item.quantity = order_item_data['quantity']
+        session.commit()
+    return jsonify({'message': 'Order item updated successfully'}), 200
+
+@app.route('/orderitems/<int:order_item_id>', methods=['DELETE'])
+def delete_order_item(order_item_id):
+    with db.session as session:
+        order_item = session.query(OrderItem).get(order_item_id)
+        session.delete(order_item)
+        session.commit()
+    return jsonify({'message': 'Order item deleted successfully'}), 200
+
+# FoodItem routes
+@app.route('/fooditems', methods=['GET'])
+def get_food_items():
+    with db.session as session:
+        food_items = session.query(FoodItem).all()
+    return jsonify([item.serialize() for item in food_items]), 200
+
+@app.route('/fooditems', methods=['POST'])
+def create_food_item():
+    food_item_data = request.json
+    food_item = FoodItem(
+        name=food_item_data['name'],
+        price=food_item_data['price'],
+        quantity=food_item_data['quantity'],
+        status=food_item_data['status'],
+    )
+    with db.session as session:
+        session.add(food_item)
+        session.commit()
+    return jsonify({'message': 'FoodItem created successfully'}), 201
+
+@app.route('/fooditems/<int:food_item_id>', methods=['PUT'])
+def update_food_item(food_item_id):
+    food_item_data = request.json
+    with db.session as session:
+        food_item = session.query(FoodItem).get(food_item_id)
+        food_item.name = food_item_data['name']
+        food_item.price = food_item_data['price']
+        food_item.quantity = food_item_data['quantity']
+        food_item.status = food_item_data['status']
+        session.commit()
+    return jsonify({'message': 'FoodItem updated successfully'}), 200
+
+@app.route('/fooditems/<int:food_item_id>', methods=['DELETE'])
+def delete_food_item(food_item_id):
+    with db.session as session:
+        food_item = session.query(FoodItem).get(food_item_id)
+        session.delete(food_item)
+        session.commit()
+    return jsonify({'message': 'FoodItem deleted successfully'}), 200
+
+# StoreItem routes
+@app.route('/storeitems', methods=['GET'])
+def get_store_items():
+    with db.session as session:
+        store_items = session.query(StoreItem).all()
+    return jsonify([item.serialize() for item in store_items]), 200
+
+@app.route('/storeitems', methods=['POST'])
+def create_store_item():
+    store_item_data = request.json
+    store_item = StoreItem(
+        name=store_item_data['name'],
+        price=store_item_data['price'],
+        quantity=store_item_data['quantity']
+    )
+    with db.session as session:
+        session.add(store_item)
+        session.commit()
+    return jsonify({'message': 'Store item created successfully'}), 201
+
+@app.route('/storeitems/<int:store_item_id>', methods=['PUT'])
+def update_store_item(store_item_id):
+    store_item_data = request.json
+    with db.session as session:
+        store_item = session.query(StoreItem).get(store_item_id)
+        store_item.name = store_item_data['name']
+        store_item.price = store_item_data['price']
+        store_item.quantity = store_item_data['quantity']
+        session.commit()
+    return jsonify({'message': 'Store item updated successfully'}), 200
+
+@app.route('/storeitems/<int:store_item_id>', methods=['DELETE'])
+def delete_store_item(store_item_id):
+    with db.session as session:
+        store_item = session.query(StoreItem).get(store_item_id)
+        session.delete(store_item)
+        session.commit()
+    return jsonify({'message': 'Store item deleted successfully'}), 200
+
+# AquaticItem routes
+@app.route('/aquaticitems', methods=['GET'])
+def get_aquatic_items():
+    with db.session as session:
+        aquatic_items = session.query(AquaticItem).all()
+    return jsonify([item.serialize() for item in aquatic_items]), 200
+
+@app.route('/aquaticitems', methods=['POST'])
+def create_aquatic_item():
+    aquatic_item_data = request.json
+    aquatic_item = AquaticItem(
+        name=aquatic_item_data['name'],
+        price=aquatic_item_data['price'],
+        quantity=aquatic_item_data['quantity']
+    )
+    with db.session as session:
+        session.add(aquatic_item)
+        session.commit()
+    return jsonify({'message': 'Aquatic item created successfully'}), 201
+
+@app.route('/aquaticitems/<int:aquatic_item_id>', methods=['PUT'])
+def update_aquatic_item(aquatic_item_id):
+    aquatic_item_data = request.json
+    with db.session as session:
+        aquatic_item = session.query(AquaticItem).get(aquatic_item_id)
+        aquatic_item.name = aquatic_item_data['name']
+        aquatic_item.price = aquatic_item_data['price']
+        aquatic_item.quantity = aquatic_item_data['quantity']
+        session.commit()
+    return jsonify({'message': 'Aquatic item updated successfully'}), 200
+
+@app.route('/aquaticitems/<int:aquatic_item_id>', methods=['DELETE'])
+def delete_aquatic_item(aquatic_item_id):
+    with db.session as session:
+        aquatic_item = session.query(AquaticItem).get(aquatic_item_id)
+        session.delete(aquatic_item)
+        session.commit()
+    return jsonify({'message': 'Aquatic item deleted successfully'}), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
@@ -36,6 +37,7 @@ class Order(db.Model):
     number_of_people = db.Column(db.Integer)
     created_at = db.Column(db.DateTime)
     updated_at = db.Column(db.DateTime)
+    items = db.relationship('OrderItem', backref='order', lazy=True)  # new field
 
     def __repr__(self):
         return '<Order %r>' % self.id
@@ -47,8 +49,25 @@ class Order(db.Model):
             "number_of_people": self.number_of_people,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
+            "items": [item.serialize() for item in self.items]
         }
 
+
+class OrderItem(db.Model):  # new model
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+    item_id = db.Column(db.Integer)
+    item_type = db.Column(db.String(50))
+    quantity = db.Column(db.Integer)
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "order_id": self.order_id,
+            "item_id": self.item_id,
+            "item_type": self.item_type,
+            "quantity": self.quantity,
+        }
 
 class FoodItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
